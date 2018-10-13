@@ -60,9 +60,9 @@ func DesEncryptByCBC(plainText, key []byte) (cipherText []byte) {
 	return cipherText
 }
 
-//des的CBC分组模式加密
+//des的CBC分组模式解密
 //cipherText密文 key:私钥
-func DesDecryptByCBC(cipherText, key []byte) []byte {
+func DesDecryptByCBC(cipherText, key []byte) (plainText []byte) {
 	//创建一个使用des的密码接口
 	block, err := des.NewCipher(key)
 	errutil.Error(err) //处理错误
@@ -72,12 +72,13 @@ func DesDecryptByCBC(cipherText, key []byte) []byte {
 	blockMode := cipher.NewCBCDecrypter(block, iv)
 
 	//创建原文切片，长度与密文大小一致
-	plainText := make([]byte, len(cipherText))
+	plainText = make([]byte, len(cipherText))
 	//解密
 	blockMode.CryptBlocks(plainText, cipherText)
 
 	//去掉可能的填充数据，将结果返回
-	return unPaddingLastGroup(plainText)
+	plainText = unPaddingLastGroup(plainText)
+	return
 }
 
 //des的CTR分组模式加密或者解密(使用异或运算，因此只需要一个方法)
