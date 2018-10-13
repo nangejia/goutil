@@ -6,7 +6,7 @@ import (
 	"github.com/nangejia/goutil/errutil"
 	"bytes"
 	"crypto/cipher"
-	)
+)
 
 //以分组为单位进行处理的密码算法称为分组密码
 //常见的对称加密分组模式有：
@@ -40,7 +40,7 @@ func unPaddingLastGroup(plainText []byte) []byte {
 
 //des的CBC分组模式加密
 //plainText是原文 key：秘钥
-func DesEncryptByCBC(plainText, key []byte) []byte {
+func DesEncryptByCBC(plainText, key []byte) (cipherText []byte) {
 	//创建一个使用des的密码接口
 	block, err := des.NewCipher(key)
 	//使用错误简单封装处理错误
@@ -49,12 +49,12 @@ func DesEncryptByCBC(plainText, key []byte) []byte {
 	newText := paddingLastGroup(plainText, block.BlockSize())
 
 	//创建CBC分组加密接口
-	iv := []byte("12345678") //随机向量
+	iv := []byte("12345678") //初始化向量
 	//返回一个块模型接口
 	blockMode := cipher.NewCBCEncrypter(block, iv)
 
 	//创建密文切片,长度与原文一样长
-	cipherText := make([]byte, len(newText))
+	cipherText = make([]byte, len(newText))
 	//加密原文生成密文
 	blockMode.CryptBlocks(cipherText, newText)
 	return cipherText
@@ -68,7 +68,7 @@ func DesDecryptByCBC(cipherText, key []byte) []byte {
 	errutil.Error(err) //处理错误
 
 	//创建CBS分组解密接口
-	iv := []byte("12345678") //随机向量
+	iv := []byte("12345678") //初始化向量
 	blockMode := cipher.NewCBCDecrypter(block, iv)
 
 	//创建原文切片，长度与密文大小一致
@@ -78,4 +78,22 @@ func DesDecryptByCBC(cipherText, key []byte) []byte {
 
 	//去掉可能的填充数据，将结果返回
 	return unPaddingLastGroup(plainText)
+}
+
+//des的CTR分组模式加密或者解密(使用异或运算，因此只需要一个方法)
+//srcText输入源 key：秘钥
+func DesCryptByCTR(srcText, key []byte) []byte {
+	//创建一个使用des的密码接口
+	block, err := des.NewCipher(key)
+	errutil.Error(err) //处理错误
+
+	//创建CTR分组接口
+	iv := []byte("12345678") //随机向量与秘钥长度一致
+	streamCTR := cipher.NewCTR(block, iv)
+
+	//加密
+	resultText := make([]byte, len(srcText))
+	streamCTR.XORKeyStream(resultText, srcText)
+
+	return resultText
 }
